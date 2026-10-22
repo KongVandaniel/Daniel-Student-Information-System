@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Student Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0">🔐 Account Login</h4>
+                </div>
+                <div class="card-body p-4">
+                    {% if form.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        Invalid username or password. Please try again.
+                    </div>
+                    {% endif %}
+
+                    {% if next %}
+                        {% if user.is_authenticated %}
+                        <div class="alert alert-warning" role="alert">
+                            Your account doesn't have access to this page. Please login with an authorized account.
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info" role="alert">
+                            Please log in to view this page.
+                        </div>
+                        {% endif %}
+                    {% endif %}
+
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ next }}">
+
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">Username</label>
+                            <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username" class="form-control" placeholder="Enter username">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="id_password" class="form-label">Password</label>
+                            <input type="password" name="password" autocomplete="current-password" required id="id_password" class="form-control" placeholder="Enter password">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-center py-3">
+                    <span class="text-muted">Don't have an account?</span>
+                    <a href="{% url 'students:register' %}" class="fw-bold">Register as a Student</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

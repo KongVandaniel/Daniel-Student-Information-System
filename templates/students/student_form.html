@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}{% if student %}Edit Student: {{ student.student_id }}{% else %}Add Student{% endif %} - Student Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'students:student_list' %}">Students</a></li>
+            {% if student %}
+            <li class="breadcrumb-item"><a href="{% url 'students:student_detail' student.id %}">{{ student.student_id }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit</li>
+            {% else %}
+            <li class="breadcrumb-item active" aria-current="page">Add New</li>
+            {% endif %}
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                {% if student %}
+                    ✏️ Edit Student Profile: <span class="text-primary">{{ student.student_id }}</span>
+                {% else %}
+                    ➕ Add New Student
+                {% endif %}
+            </h2>
+            <p class="text-muted mb-0">Update student personal details and user account settings.</p>
+        </div>
+        <div>
+            {% if student %}
+            <a href="{% url 'students:student_detail' student.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> View Profile
+            </a>
+            {% else %}
+            <a href="{% url 'students:student_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-lg-8">
+                {% if user_form and student_form %}
+                    <!-- User Account Information -->
+                    <div class="card mb-4 shadow-sm border-0">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h5 class="mb-0">👤 User Account Information</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            {% if user_form.non_field_errors %}
+                                <div class="alert alert-danger">{{ user_form.non_field_errors }}</div>
+                            {% endif %}
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="{{ user_form.username.id_for_label }}" class="form-label fw-semibold">Username *</label>
+                                    {{ user_form.username }}
+                                    {% if user_form.username.errors %}
+                                        <div class="invalid-feedback d-block">{{ user_form.username.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ user_form.email.id_for_label }}" class="form-label fw-semibold">Email Address *</label>
+                                    {{ user_form.email }}
+                                    {% if user_form.email.errors %}
+                                        <div class="invalid-feedback d-block">{{ user_form.email.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ user_form.first_name.id_for_label }}" class="form-label fw-semibold">First Name</label>
+                                    {{ user_form.first_name }}
+                                    {% if user_form.first_name.errors %}
+                                        <div class="invalid-feedback d-block">{{ user_form.first_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ user_form.last_name.id_for_label }}" class="form-label fw-semibold">Last Name</label>
+                                    {{ user_form.last_name }}
+                                    {% if user_form.last_name.errors %}
+                                        <div class="invalid-feedback d-block">{{ user_form.last_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Student Profile Information -->
+                    <div class="card mb-4 shadow-sm border-0">
+                        <div class="card-header bg-info text-white py-3">
+                            <h5 class="mb-0">🎓 Student Academic & Personal Details</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            {% if student_form.non_field_errors %}
+                                <div class="alert alert-danger">{{ student_form.non_field_errors }}</div>
+                            {% endif %}
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="{{ student_form.student_id.id_for_label }}" class="form-label fw-semibold">Student ID *</label>
+                                    {{ student_form.student_id }}
+                                    {% if student_form.student_id.errors %}
+                                        <div class="invalid-feedback d-block">{{ student_form.student_id.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ student_form.khmer_name.id_for_label }}" class="form-label fw-semibold text-primary">ឈ្មោះខ្មែរ (Khmer Name - Primary)</label>
+                                    {{ student_form.khmer_name }}
+                                    {% if student_form.khmer_name.errors %}
+                                        <div class="invalid-feedback d-block">{{ student_form.khmer_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ student_form.date_of_birth.id_for_label }}" class="form-label fw-semibold">Date of Birth *</label>
+                                    {{ student_form.date_of_birth }}
+                                    {% if student_form.date_of_birth.errors %}
+                                        <div class="invalid-feedback d-block">{{ student_form.date_of_birth.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ student_form.gender.id_for_label }}" class="form-label fw-semibold">Gender *</label>
+                                    {{ student_form.gender }}
+                                    {% if student_form.gender.errors %}
+                                        <div class="invalid-feedback d-block">{{ student_form.gender.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ student_form.phone_number.id_for_label }}" class="form-label fw-semibold">Phone Number</label>
+                                    {{ student_form.phone_number }}
+                                    {% if student_form.phone_number.errors %}
+                                        <div class="invalid-feedback d-block">{{ student_form.phone_number.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-12">
+                                    <label for="{{ student_form.address.id_for_label }}" class="form-label fw-semibold">Address *</label>
+                                    {{ student_form.address }}
+                                    {% if student_form.address.errors %}
+                                        <div class="invalid-feedback d-block">{{ student_form.address.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ student_form.city.id_for_label }}" class="form-label fw-semibold">City *</label>
+                                    {{ student_form.city }}
+                                    {% if student_form.city.errors %}
+                                        <div class="invalid-feedback d-block">{{ student_form.city.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ student_form.country.id_for_label }}" class="form-label fw-semibold">Country *</label>
+                                    {{ student_form.country }}
+                                    {% if student_form.country.errors %}
+                                        <div class="invalid-feedback d-block">{{ student_form.country.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-12">
+                                    <label for="{{ student_form.profile_picture.id_for_label }}" class="form-label fw-semibold">Profile Picture</label>
+                                    {{ student_form.profile_picture }}
+                                    {% if student_form.profile_picture.errors %}
+                                        <div class="invalid-feedback d-block">{{ student_form.profile_picture.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Generic Single Form Fallback -->
+                    <div class="card mb-4 shadow-sm border-0">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h5 class="mb-0">Student Form</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                            {% endif %}
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div class="invalid-feedback d-block">{{ field.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Save & Cancel Buttons -->
+                <div class="d-flex gap-2 mb-4">
+                    <button type="submit" class="btn btn-primary btn-lg px-4">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    {% if student %}
+                    <a href="{% url 'students:student_detail' student.id %}" class="btn btn-secondary btn-lg px-4">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                    {% else %}
+                    <a href="{% url 'students:student_list' %}" class="btn btn-secondary btn-lg px-4">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Sidebar: Student Summary -->
+            <div class="col-lg-4">
+                {% if student %}
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-light py-3">
+                        <h6 class="mb-0 fw-bold">Student Overview</h6>
+                    </div>
+                    <div class="card-body text-center p-4">
+                        {% if student.profile_picture %}
+                            <img src="{{ student.profile_picture.url }}" alt="{{ student.get_primary_name }}" class="rounded-circle img-thumbnail mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 100px; height: 100px; font-size: 2.5rem;">
+                                {% if student.khmer_name %}
+                                    {{ student.khmer_name|slice:":1" }}
+                                {% elif student.user.first_name %}
+                                    {{ student.user.first_name|slice:":1" }}
+                                {% else %}
+                                    👤
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <h5 class="card-title mb-1 text-primary fw-bold">{{ student.khmer_name|default:student.user.get_full_name }}</h5>
+                        {% if student.khmer_name and student.user.get_full_name %}
+                            <p class="text-muted small mb-1">{{ student.user.get_full_name }}</p>
+                        {% endif %}
+                        <p class="text-muted small mb-2">{{ student.student_id }}</p>
+                        
+                        <div class="d-flex justify-content-center gap-2 mb-3">
+                            {% if student.is_active %}
+                                <span class="badge bg-success">Active Student</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                            <span class="badge bg-info">GPA: {{ student.gpa }}</span>
+                        </div>
+
+                        <hr>
+                        <ul class="list-unstyled text-start small mb-0">
+                            <li class="mb-2"><strong>Joined:</strong> {{ student.enrollment_date|date:"F d, Y" }}</li>
+                            <li class="mb-2"><strong>Enrollments:</strong> {{ student.enrollments.count }} courses</li>
+                            <li><strong>Username:</strong> {{ student.user.username }}</li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="card shadow-sm border-0 bg-light">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-2">💡 Tips</h6>
+                        <ul class="small text-muted ps-3 mb-0">
+                            <li>All fields marked with an asterisk (*) are required.</li>
+                            <li>Student ID must be unique across the university.</li>
+                            <li>Updating the email address updates the user's primary login contact.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

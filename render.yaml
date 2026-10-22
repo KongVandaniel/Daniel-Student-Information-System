@@ -1,0 +1,28 @@
+# ==============================================================================
+# Render Blueprint Configuration (Infrastructure as Code)
+# Build Bright University (BBU) - Student Management System
+# ==============================================================================
+services:
+  - type: web
+    name: bbu-student-system
+    runtime: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "python manage.py migrate && python manage.py setup_test_data --student-count 100 && gunicorn student_system.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bbu-student-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: "localhost,127.0.0.1"
+
+databases:
+  - name: bbu-student-db
+    plan: free

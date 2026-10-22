@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Overview - BBU Student Information System{% endblock %}
+
+{% block content %}
+<div class="container-fluid page-container dashboard-home">
+    <section class="dashboard-hero">
+        <div class="hero-copy">
+            <div class="eyebrow"><span class="eyebrow-line"></span> BUILD BRIGHT UNIVERSITY <span class="eyebrow-dot">•</span> ACADEMIC SERVICES</div>
+            <h1>
+                Student Information <span>System</span><br>
+                <span class="creator-credit">BY KONG VANDANIEL</span>
+            </h1>
+            <p class="hero-lead">ប្រព័ន្ធគ្រប់គ្រងនិស្សិត <span class="hero-divider">/</span> A central workspace for student records, courses, and enrollment.</p>
+            <div class="hero-actions">
+                <a href="{% url 'students:student_list' %}" class="btn btn-primary"><i class="fa-solid fa-users me-2" aria-hidden="true"></i>View students</a>
+                <a href="{% url 'courses:course_list' %}" class="btn btn-outline-secondary"><i class="fa-solid fa-book-open me-2" aria-hidden="true"></i>Browse courses</a>
+            </div>
+        </div>
+        <div class="hero-stamp" aria-hidden="true">
+            <span class="stamp-top">BBU</span>
+            <span class="stamp-rule"></span>
+            <i class="fa-solid fa-building-columns"></i>
+            <span class="stamp-bottom">LEARN · BUILD · GROW</span>
+        </div>
+    </section>
+
+    <section class="overview-section" aria-labelledby="overview-heading">
+        <div class="section-heading">
+            <div>
+                <p class="section-kicker">AT A GLANCE</p>
+                <h2 id="overview-heading">Academic overview</h2>
+            </div>
+            <span class="section-caption"><span class="status-indicator"></span> System overview</span>
+        </div>
+
+        <div class="row g-3 g-xl-4 metric-grid">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <a class="metric-card" href="{% url 'students:student_list' %}">
+                    <div class="metric-top"><span class="metric-icon"><i class="fa-solid fa-user-graduate" aria-hidden="true"></i></span><span class="metric-label">STUDENTS</span></div>
+                    <div class="metric-value">{{ total_students|default:"0" }}</div>
+                    <div class="metric-bottom"><span>Registered student records</span><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <a class="metric-card" href="{% url 'courses:course_list' %}">
+                    <div class="metric-top"><span class="metric-icon metric-icon-neutral"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span><span class="metric-label">COURSES</span></div>
+                    <div class="metric-value">{{ total_courses|default:"0" }}</div>
+                    <div class="metric-bottom"><span>Available course records</span><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <a class="metric-card" href="{% url 'enrollments:enrollment_list' %}">
+                    <div class="metric-top"><span class="metric-icon metric-icon-warm"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i></span><span class="metric-label">ENROLLMENTS</span></div>
+                    <div class="metric-value">{{ total_enrollments|default:"0" }}</div>
+                    <div class="metric-bottom"><span>Recorded course enrollments</span><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <a class="metric-card" href="/admin/">
+                    <div class="metric-top"><span class="metric-icon metric-icon-muted"><i class="fa-solid fa-sliders" aria-hidden="true"></i></span><span class="metric-label">ADMINISTRATION</span></div>
+                    <div class="metric-value metric-value-word">Admin panel</div>
+                    <div class="metric-bottom"><span>Manage system data</span><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="row g-3 g-xl-4 dashboard-lower">
+        <div class="col-12 col-xl-5">
+            <div class="panel-card h-100">
+                <div class="panel-heading">
+                    <div><p class="section-kicker">CURRENT RECORDS</p><h2>System status</h2></div>
+                    <span class="panel-heading-icon"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i></span>
+                </div>
+                <div class="status-list">
+                    <div class="status-row"><span class="status-label"><span class="status-icon"><i class="fa-solid fa-users" aria-hidden="true"></i></span>Active students</span><strong>{{ active_students|default:"0" }}</strong></div>
+                    <div class="status-row"><span class="status-label"><span class="status-icon"><i class="fa-solid fa-book" aria-hidden="true"></i></span>Active courses</span><strong>{{ active_courses|default:"0" }}</strong></div>
+                </div>
+                <div class="panel-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>Summary values are provided by the current system records.</span></div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-7">
+            <div class="panel-card h-100">
+                <div class="panel-heading">
+                    <div><p class="section-kicker">GETTING STARTED</p><h2>Work with the system</h2></div>
+                    <span class="panel-heading-icon"><i class="fa-solid fa-compass" aria-hidden="true"></i></span>
+                </div>
+                <div class="workflow-list">
+                    <a class="workflow-item" href="{% url 'students:student_list' %}"><span class="workflow-number">01</span><span class="workflow-copy"><strong>Student records</strong><small>Search profiles and view academic transcripts.</small></span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                    <a class="workflow-item" href="{% url 'courses:course_list' %}"><span class="workflow-number">02</span><span class="workflow-copy"><strong>Course catalogue</strong><small>Browse courses and review course details.</small></span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                    <a class="workflow-item" href="{% url 'enrollments:enrollment_list' %}"><span class="workflow-number">03</span><span class="workflow-copy"><strong>Enrollments and grades</strong><small>Review enrollment status and recorded results.</small></span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                    <a class="workflow-item" href="/admin/"><span class="workflow-number">04</span><span class="workflow-copy"><strong>Administration</strong><small>Open the Django admin area where authorized.</small></span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="resource-section">
+        <div class="section-heading">
+            <div><p class="section-kicker">REFERENCE DESK</p><h2>Useful resources</h2></div>
+            <span class="section-caption">Documentation & learning</span>
+        </div>
+        <div class="row g-3">
+            <div class="col-12 col-md-4"><a class="resource-card" href="https://docs.djangoproject.com/" target="_blank" rel="noopener noreferrer"><span class="resource-icon"><i class="fa-brands fa-python" aria-hidden="true"></i></span><span class="resource-copy"><strong>Django documentation</strong><small>Framework guides and reference</small></span><i class="fa-solid fa-arrow-up-right-from-square resource-arrow" aria-hidden="true"></i></a></div>
+            <div class="col-12 col-md-4"><a class="resource-card" href="https://www.django-rest-framework.org/" target="_blank" rel="noopener noreferrer"><span class="resource-icon"><i class="fa-solid fa-code" aria-hidden="true"></i></span><span class="resource-copy"><strong>Django REST Framework</strong><small>API development documentation</small></span><i class="fa-solid fa-arrow-up-right-from-square resource-arrow" aria-hidden="true"></i></a></div>
+            <div class="col-12 col-md-4"><a class="resource-card" href="https://getbootstrap.com/" target="_blank" rel="noopener noreferrer"><span class="resource-icon"><i class="fa-brands fa-bootstrap" aria-hidden="true"></i></span><span class="resource-copy"><strong>Bootstrap documentation</strong><small>Layout and component reference</small></span><i class="fa-solid fa-arrow-up-right-from-square resource-arrow" aria-hidden="true"></i></a></div>
+        </div>
+    </section>
+</div>
+{% endblock %}
