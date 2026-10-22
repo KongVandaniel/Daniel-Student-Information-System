@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 from decouple import config, Csv
+from django.core.serializers import python
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -99,31 +100,25 @@ WSGI_APPLICATION = 'student_system.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+import dj_database_url
 
-DATABASES = {
-    'default': {
-        'ENGINE': config('DB_ENGINE', default='django.db.backends.sqlite3'),
-        'NAME': BASE_DIR / config('DB_NAME', default='db.sqlite3'),
-        'USER': config('DB_USER', default=''),
-        'PASSWORD': config('DB_PASSWORD', default=''),
-        'HOST': config('DB_HOST', default=''),
-        'PORT': config('DB_PORT', default=''),
-    }
-}
+DATABASE_URL = config('DATABASE_URL', default='')
 
-# Automatically configure database via DATABASE_URL if present (Render, Heroku, etc.)
-DATABASE_URL = config('DATABASE_URL', default=None)
 if DATABASE_URL:
-    try:
-        import dj_database_url
-        DATABASES['default'] = dj_database_url.parse(
+    DATABASES = {
+        'default': dj_database_url.parse(
             DATABASE_URL,
             conn_max_age=600,
-            conn_health_checks=True
+            conn_health_checks=True,
         )
-    except ImportError:
-        pass
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
