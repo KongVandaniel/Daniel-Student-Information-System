@@ -21,12 +21,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-jt%luhks(%f-u+rud531b)xdv^*^6e=1hiu6awz9^83aj9)5-&')
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = list(config('ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver', cast=Csv()))
+ALLOWED_HOSTS = list(config(
+    'ALLOWED_HOSTS',
+    default='localhost,127.0.0.1,testserver,.vercel.app',
+    cast=Csv()
+))
 RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None)
 if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
@@ -34,7 +38,7 @@ if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
 # CSRF Trusted Origins for Django 4.0+ in Production (HTTPS)
 CSRF_TRUSTED_ORIGINS = list(config(
     'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost:8000,http://127.0.0.1:8000',
+    default='http://localhost:8000,http://127.0.0.1:8000,https://*.vercel.app',
     cast=Csv()
 ))
 if RENDER_EXTERNAL_HOSTNAME:
@@ -187,9 +191,16 @@ LOGOUT_REDIRECT_URL = 'home'
 # These are configured via .env file for production/development differences
 
 # SSL/HTTPS Configuration
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
-SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
-CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
+SECURE_SSL_REDIRECT = config(
+    'SECURE_SSL_REDIRECT',
+    default=False,
+    cast=bool,
+)
+
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # HSTS (HTTP Strict-Transport-Security)
 SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
@@ -205,7 +216,7 @@ SECURE_CONTENT_SECURITY_POLICY = {
 }
 
 # X-Frame-Options
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+X_FRAME_OPTIONS = 'DENY'
 
 # Content Security
 SECURE_BROWSER_XSS_FILTER = True

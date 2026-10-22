@@ -81,3 +81,7 @@ dist/
 # Temporary & Antigravity/Agent Files
 scratch/
 .gemini/
+
+# Local database backups containing student data
+data_backup.json
+db_backup.sqlite3
