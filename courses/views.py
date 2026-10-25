@@ -18,7 +18,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 # import login_required from django.contrib.auth.decorators module for view functions
 # login_required is used to require login to access a view
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 # import Q, Count from django.db.models module for view functions
 # Q is used to perform complex queries
 # Count is used to count the number of objects
@@ -43,6 +43,14 @@ from .forms import CourseForm, CourseFilterForm
 # it is a HttpRequest object that contains information about the request
 # it has the following attributes: method, GET, POST, COOKIES, session, user, etc.
 # it has the following methods: is_ajax(), is_secure(), etc.
+
+def staff_required(view_func):
+    """Allow only staff members and superusers to manage courses."""
+    return user_passes_test(
+        lambda user: user.is_authenticated
+        and (user.is_staff or user.is_superuser)
+    )(view_func)
+
 def course_list(request):
     """List all courses with filtering options"""
     # Get all courses
@@ -93,8 +101,7 @@ def course_detail(request, pk):
     return render(request, 'courses/course_detail.html', context)
 
 #@login_required is a decorator that requires login to access a view
-@login_required
-# Course Creation View
+@staff_required
 def course_create(request):
     """Create a new course"""
     # Check if the request method is POST
@@ -115,8 +122,7 @@ def course_create(request):
     # Render the template
     return render(request, 'courses/course_form.html', context)
 
-@login_required
-# Course Update View
+@staff_required
 def course_update(request, pk):
     """Update course information"""
     # Get the course by primary key
@@ -139,8 +145,7 @@ def course_update(request, pk):
     # Render the template
     return render(request, 'courses/course_form.html', context)
 
-@login_required
-# Course Deletion View
+@staff_required
 def course_delete(request, pk):
     """Delete a course"""
     # Get the course by primary key
@@ -214,22 +219,39 @@ class CourseDetailView(DetailView):
         context['total_students'] = self.object.enrollments.count()
         return context
 
-class CourseCreateView(LoginRequiredMixin, CreateView):
-    """Class-based view for creating a new course"""
+class CourseCreateView(
+    LoginRequiredMixin, UserPassesTestMixin, CreateView
+):
+    """Allow only staff and superusers to create courses."""
     model = Course
     form_class = CourseForm
     template_name = 'courses/course_form.html'
     success_url = reverse_lazy('courses:course_list')
 
-class CourseUpdateView(LoginRequiredMixin, UpdateView):
-    """Class-based view for updating course information"""
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+
+class CourseUpdateView(
+    LoginRequiredMixin, UserPassesTestMixin, UpdateView
+):
+    """Allow only staff and superusers to update courses."""
     model = Course
     form_class = CourseForm
     template_name = 'courses/course_form.html'
     success_url = reverse_lazy('courses:course_list')
 
-class CourseDeleteView(LoginRequiredMixin, DeleteView):
-    """Class-based view for deleting a course"""
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+
+class CourseDeleteView(
+    LoginRequiredMixin, UserPassesTestMixin, DeleteView
+):
+    """Allow only staff and superusers to delete courses."""
     model = Course
     template_name = 'courses/course_confirm_delete.html'
     success_url = reverse_lazy('courses:course_list')
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser

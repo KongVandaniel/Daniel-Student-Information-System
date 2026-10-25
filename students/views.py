@@ -1,7 +1,8 @@
+from django.core.serializers import python
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 from django.contrib.auth.models import User
@@ -12,13 +13,29 @@ from django.core.paginator import Paginator
 from .models import Student
 from .forms import StudentForm, UserForm, StudentRegistrationForm
 
+def get_accessible_student(request, pk):
+    """Allow students to access only their own profile.
+    Staff and superusers can access any student profile.
+    """
+    students = Student.objects.select_related('user')
+
+    if request.user.is_staff or request.user.is_superuser:
+        return get_object_or_404(students, pk=pk)
+
+    return get_object_or_404(students, pk=pk, user=request.user)
+
 # Function-Based Views (FBV)
 
 @login_required
 def student_list(request):
     """List all students with search functionality and pagination"""
     search_query = request.GET.get('q', '').strip()
-    students_qs = Student.objects.select_related('user').all()
+    if request.user.is_staff or request.user.is_superuser:
+        students_qs = Student.objects.select_related('user').all()
+    else:
+        students_qs = Student.objects.select_related('user').filter(
+            user=request.user
+        )
     
     if search_query:
         students_qs = students_qs.filter(
@@ -45,7 +62,7 @@ def student_list(request):
 @login_required
 def student_detail(request, pk):
     """Display detailed information about a student"""
-    student = get_object_or_404(Student, pk=pk)
+    student = get_accessible_student(request, pk)
     enrollments = student.enrollments.all()
     
     context = {
@@ -57,7 +74,7 @@ def student_detail(request, pk):
 @login_required
 def student_update(request, pk):
     """Update student information"""
-    student = get_object_or_404(Student, pk=pk)
+    student = get_accessible_student(request, pk)
     
     if request.method == 'POST':
         student_form = StudentForm(request.POST, request.FILES, instance=student)
@@ -124,14 +141,21 @@ def register_student(request):
 
 @login_required
 def student_delete(request, pk):
-    """Delete a student"""
+    """Allow only staff and superusers to delete student records."""
+
+    if not (request.user.is_staff or request.user.is_superuser):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+
     student = get_object_or_404(Student, pk=pk)
+
     if request.method == 'POST':
         user = student.user
         student.delete()
         user.delete()
+        messages.success(request, "Student deleted successfully!")
         return redirect('students:student_list')
-    
+
     context = {'student': student}
     return render(request, 'students/student_confirm_delete.html', context)
 
@@ -143,11 +167,17 @@ class StudentListView(LoginRequiredMixin, ListView):
     template_name = 'students/student_list.html'
     context_object_name = 'students'
     paginate_by = 20
-    
+
     def get_queryset(self):
-        queryset = Student.objects.select_related('user').all()
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            queryset = Student.objects.select_related('user').all()
+        else:
+            queryset = Student.objects.select_related('user').filter(
+                user=self.request.user
+            )
+
         search_query = self.request.GET.get('q', '').strip()
-        
+
         if search_query:
             queryset = queryset.filter(
                 Q(student_id__icontains=search_query) |
@@ -156,9 +186,9 @@ class StudentListView(LoginRequiredMixin, ListView):
                 Q(user__last_name__icontains=search_query) |
                 Q(user__email__icontains=search_query)
             )
-        
+
         return queryset.order_by('student_id')
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_query'] = self.request.GET.get('q', '').strip()
@@ -169,31 +199,51 @@ class StudentDetailView(LoginRequiredMixin, DetailView):
     model = Student
     template_name = 'students/student_detail.html'
     context_object_name = 'student'
-    
+
+    def get_queryset(self):
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return Student.objects.select_related('user')
+
+        return Student.objects.select_related('user').filter(
+            user=self.request.user
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['enrollments'] = self.object.enrollments.all()
         return context
 
-class StudentCreateView(LoginRequiredMixin, CreateView):
-    """Class-based view for creating a new student"""
+class StudentCreateView(
+    LoginRequiredMixin, UserPassesTestMixin, CreateView
+):
+    """Allow only staff and superusers to create student records."""
+
     model = Student
     form_class = StudentForm
     template_name = 'students/student_form.html'
     success_url = reverse_lazy('students:student_list')
 
+    def test_func(self):
+        return (
+            self.request.user.is_staff
+            or self.request.user.is_superuser
+        )
+
     def form_valid(self, form):
-        if not hasattr(form.instance, 'user') or form.instance.user_id is None:
-            if not hasattr(self.request.user, 'student'):
-                form.instance.user = self.request.user
-            else:
-                student_id = form.cleaned_data.get('student_id', '')
-                username = f"std_{student_id.lower()}"
-                user, _ = User.objects.get_or_create(
-                    username=username,
-                    defaults={'first_name': form.cleaned_data.get('khmer_name', student_id)}
-                )
-                form.instance.user = user
+        if form.instance.user_id is None:
+            student_id = form.cleaned_data.get('student_id', '')
+            username = f"std_{student_id.lower()}"
+
+            user, _ = User.objects.get_or_create(
+                username=username,
+                defaults={
+                    'first_name': form.cleaned_data.get(
+                        'khmer_name', student_id
+                    )
+                }
+            )
+            form.instance.user = user
+
         return super().form_valid(form)
 
 class StudentUpdateView(LoginRequiredMixin, UpdateView):
@@ -203,8 +253,23 @@ class StudentUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'students/student_form.html'
     success_url = reverse_lazy('students:student_list')
 
+    def get_queryset(self):
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return Student.objects.all()
+
+        return Student.objects.filter(user=self.request.user)
+
 class StudentDeleteView(LoginRequiredMixin, DeleteView):
     """Class-based view for deleting a student"""
     model = Student
     template_name = 'students/student_confirm_delete.html'
     success_url = reverse_lazy('students:student_list')
+
+    def get_queryset(self):
+        if not (
+            self.request.user.is_staff
+            or self.request.user.is_superuser
+        ):
+            return Student.objects.none()
+
+        return Student.objects.all()

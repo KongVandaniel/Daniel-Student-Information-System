@@ -1,17 +1,34 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, SAFE_METHODS, BasePermission
 from students.models import Student
 from courses.models import Course
 from enrollments.models import Enrollment
 from student_system.serializers import StudentSerializer, CourseSerializer, EnrollmentSerializer, EnrollmentDetailSerializer
 
+class StaffWritePermission(BasePermission):
+    """Authenticated users may read permitted records; only staff may write."""
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if request.method in SAFE_METHODS:
+            return True
+        return request.user.is_staff or request.user.is_superuser
+
+
 class StudentViewSet(viewsets.ModelViewSet):
     """ViewSet for Student API endpoints"""
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [StaffWritePermission]
+
+    def get_queryset(self):
+        queryset = Student.objects.select_related('user')
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return queryset
+        return queryset.filter(user=self.request.user)
     filterset_fields = ['is_active', 'gender', 'city']
     search_fields = ['student_id', 'khmer_name', 'user__username', 'user__first_name', 'user__last_name']
     ordering_fields = ['student_id', 'enrollment_date', 'gpa']
@@ -55,6 +72,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     """ViewSet for Course API endpoints"""
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+    permission_classes = [IsAuthenticated]
     filterset_fields = ['status', 'level']
     search_fields = ['code', 'title', 'instructor__username']
     ordering_fields = ['code', 'start_date', 'capacity']
@@ -62,7 +80,12 @@ class CourseViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def enrollments(self, request, pk=None):
-        """Get all enrollments for a specific course"""
+        """Only staff and superusers may view the full course roster."""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response(
+                {"detail": "You do not have permission to view other students."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         course = self.get_object()
         enrollments = course.enrollments.all()
         serializer = EnrollmentSerializer(enrollments, many=True)
@@ -70,7 +93,12 @@ class CourseViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def students(self, request, pk=None):
-        """Get all students enrolled in a course"""
+        """Only staff and superusers may view the full student roster."""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response(
+                {"detail": "You do not have permission to view other students."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         course = self.get_object()
         students = Student.objects.filter(enrollments__course=course).distinct()
         serializer = StudentSerializer(students, many=True)
@@ -97,7 +125,13 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
     """ViewSet for Enrollment API endpoints"""
     queryset = Enrollment.objects.all()
     serializer_class = EnrollmentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [StaffWritePermission]
+
+    def get_queryset(self):
+        queryset = Enrollment.objects.select_related('student', 'course')
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return queryset
+        return queryset.filter(student__user=self.request.user)
     filterset_fields = ['status', 'student__student_id', 'course__code']
     search_fields = ['student__student_id', 'course__code', 'student__user__username']
     ordering_fields = ['enrollment_date', 'score', 'status']
@@ -105,7 +139,12 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def submit_grade(self, request, pk=None):
-        """Submit or update grade for an enrollment"""
+        """Only staff and superusers may change grades."""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response(
+                {"detail": "Only staff may change grades."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         enrollment = self.get_object()
         
         if 'score' in request.data:
@@ -123,7 +162,12 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def complete_enrollment(self, request, pk=None):
-        """Mark an enrollment as completed"""
+        """Only staff and superusers may complete enrollments."""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response(
+                {"detail": "Only staff may manage enrollments."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         enrollment = self.get_object()
         enrollment.status = 'COMPLETED'
         enrollment.completed_date = __import__('django.utils.timezone', fromlist=['now']).now().date()
